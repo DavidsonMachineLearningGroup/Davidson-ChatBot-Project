@@ -1,4 +1,5 @@
 **/*/node_modules/
+WebDownloads/
 typings/
 node_modules/
 *.env
