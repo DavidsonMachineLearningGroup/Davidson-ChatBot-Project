@@ -19,10 +19,20 @@ When a new member enters channel, they are presented with icebreaker questions
 
 Contribute ideas for the bot here: [https://github.com/DavidsonMachineLearningGroup/Davidson-ChatBot-Project/issues/1/]
 
-### Instructions ###
+### High level instructions for setting up your development environment ###
 
 This chatbot is hosted via Azure for our slack channel and remotely communicates to our server for tensorflow processing. Please join our Slack channel #dml_chatbot for active development of the bot.  For an invite please contact us at [https://machinelearning.group/] .  
 
+1.  download the emulator for your operating system: [https://emulator.botframework.com/]
+2.  download Visual Code for your operating system: [https://code.visualstudio.com/download] (Note: you can use other IDE’s at your own descrection, all directions here will be in visual code)
+3.  clone project locally from this github repository  
+4.  load project in Visual Studio Code
+5.  install all required node packages specified in messages/package.json (e.g. 'nps install messages')
+6.  change messages/index.js devnode variable to ‘debugWithEmulator’
+7.  launch debugger within Visual Code
+8.  launch emulator
+9.  connect with emulator and set breakpoints as needed
+10. when submitting, change devnode variable back to 'prod'.  Submit to branch 'DebugBotBranch' if using the test bot.  Once tested and ready for the production bot, submit to 'Master'
 
 ### High Level Overview ###
 ![high level overview diagram](for_readme/HighLevelOverview_Azure.png)
