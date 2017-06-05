@@ -9,7 +9,7 @@ var builder = require("botbuilder");
 var botbuilder_azure = require("botbuilder-azure");
 var cognitiveservices = require ("botbuilder-cognitiveservices")
 
-var devmode  = 'debugWithEmulator'; // options are 'prod' 'debugWithEmulator' 'debugWithSlack'
+var devmode  = 'prod'; // options are 'prod' 'debugWithEmulator' 'debugWithSlack'
 
 /*var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({*/
 if (devmode == 'prod')
