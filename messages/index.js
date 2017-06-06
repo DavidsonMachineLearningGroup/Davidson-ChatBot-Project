@@ -33,7 +33,6 @@ else if (devmode == 'debugWithSlack')
 }
 else if (devmode == 'debugWithEmulator')
 {
-    require('dotenv').load();
     var connector = new builder.ChatConnector();
 }
 else 
