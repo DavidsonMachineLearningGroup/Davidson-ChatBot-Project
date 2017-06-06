@@ -9,7 +9,7 @@ var builder = require("botbuilder");
 var botbuilder_azure = require("botbuilder-azure");
 var cognitiveservices = require ("botbuilder-cognitiveservices")
 
-var devmode  = 'prod'; // options are 'prod' 'debugWithEmulator' 'debugWithSlack'
+var devmode  = 'debugWithEmulator'; // options are 'prod' 'debugWithEmulator' 'debugWithSlack'
 
 /*var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({*/
 if (devmode == 'prod')
@@ -95,7 +95,9 @@ bot.on('conversationUpdate', function (message) {
     {
         var membersAdded = message.membersAdded
             .map(function (m) {
-                var isSelf = m.id === message.address.bot.id;
+                if(m.id === message.address.bot.id)
+                    return;
+                userStore.push(message.address)
                 return (isSelf ? message.address.bot.name : m.name) || '' + ' (Id: ' + m.id + ')';
             })
             .join(', ');
@@ -103,9 +105,6 @@ bot.on('conversationUpdate', function (message) {
         bot.send(new builder.Message()
             .address(message.address)
             .text('Welcome ' + membersAdded + ' to our ' + message.address.conversation.name + ' channel.  If you don\'t mind I\'ll ask you a few questions. (full disclosure: I\'m just a bot trying to facalitate introductions!)'));
-
-        var address = message.address;
-        userStore.push(address);
     }
 });
 
