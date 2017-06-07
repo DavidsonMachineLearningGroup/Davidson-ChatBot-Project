@@ -7,8 +7,9 @@ http://docs.botframework.com/builder/node/guides/understanding-natural-language/
 "use strict";
 var builder = require("botbuilder");
 var botbuilder_azure = require("botbuilder-azure");
-var cognitiveservices = require ("botbuilder-cognitiveservices")
+var cognitiveservices = require ("botbuilder-cognitiveservices");
 
+var webrequest = require('ajax-request');
 var devmode  = 'debugWithEmulator'; // options are 'prod' 'debugWithEmulator' 'debugWithSlack'
 
 /*var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({*/
@@ -33,6 +34,13 @@ else if (devmode == 'debugWithSlack')
 }
 else if (devmode == 'debugWithEmulator')
 {
+    // attempt to load .env file. continue only in debugEmulatorMode
+    try {
+        require('dotenv').load();
+    }
+    catch (e) {
+        console.warn("No .env file loaded");
+    }
     var connector = new builder.ChatConnector();
 }
 else 
@@ -58,24 +66,47 @@ var basicQnAMakerDialog = new cognitiveservices.QnAMakerDialog({
 });
 
 bot.dialog('FAQ_QnA', basicQnAMakerDialog);
-//bot.dialog('/', basicQnAMakerDialog);
+
+/** smmry.com interface dialog */
+bot.dialog('tldr', [
+    function(session, args){
+        var summaryUrl = args.text;
+        session.send('Let me see if I remember how to read today');
+        webrequest({
+            url: 'http://api.smmry.com',
+            method: 'GET',
+            json: true,
+            data: {
+                SM_API_KEY: '***REMOVED***',
+                SM_URL: summaryUrl
+            }
+        }, function(err, res, body) {
+            //console.log(err);
+            //console.log(res);
+            console.log(body);
+        });
+        session.endDialog();
+    }]);
+/** Router Section */
 bot.dialog('/', [
     function (session, args, next) {
-        if (/^faq /i.test (session.message.text) == true)
+        if (/^faq /i.test(session.message.text) == true)
         {
             session.message.text = session.message.text.replace (/^faq /i, '');
             session.send('Looking up FAQ question: %s', session.message.text);
-///            session.beginDialog (basicQnAMakerDialog)
-//            session.beginDialog('/profile');
             console.log(session.message.text);
             session.beginDialog ('FAQ_QnA');
-        } else {
+        }
+        else if (/^tldr /i.test(session.message.text) === true)
+        {
+            session.send('Where do you find these articles?');
+            session.message.text = session.message.text.replace(/^tldr /i, '');
+            session.beginDialog('tldr', session.message);
+        } 
+        else {
             next();
         }
     },
-//    function (session, results) {
-//        session.send('Hello %s!', session.userData.name);
-//    }
 ]);
 
 
@@ -111,6 +142,7 @@ bot.on('conversationUpdate', function (message) {
             bot.send(new builder.Message()
                 .address(message.address)
                 .text('Welcome ' + membersAdded + ' to our ' + channelName + ' channel.  If you don\'t mind I\'ll ask you a few questions. (full disclosure: I\'m just a bot trying to facalitate introductions!)'));
+            userStore.push(message.address);
         }
     }
 });
