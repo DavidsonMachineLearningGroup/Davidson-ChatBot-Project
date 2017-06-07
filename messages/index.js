@@ -88,23 +88,30 @@ bot.dialog('/', [
 });
 */
 
-var userStore = [];
+
 // originally from https://github.com/Microsoft/BotBuilder-Samples/tree/master/Node/core-GetConversationMembers
+var userStore = [];
+// Push address where there is new users to greet.
 bot.on('conversationUpdate', function (message) {
     if (message.membersAdded && message.membersAdded.length > 0) 
     {
         var membersAdded = message.membersAdded
             .map(function (m) {
+                // Don't add for bot joining event
                 if(m.id === message.address.bot.id)
                     return;
-                userStore.push(message.address)
-                return (isSelf ? message.address.bot.name : m.name) || '' + ' (Id: ' + m.id + ')';
+                return (m.name) || '' + ' (Id: ' + m.id + ')';
             })
             .join(', ');
 
-        bot.send(new builder.Message()
-            .address(message.address)
-            .text('Welcome ' + membersAdded + ' to our ' + message.address.conversation.name + ' channel.  If you don\'t mind I\'ll ask you a few questions. (full disclosure: I\'m just a bot trying to facalitate introductions!)'));
+        // If blank, then only the bot was added. Don't greet yourself bot that's weird
+        if (membersAdded)
+        {
+            var channelName = message.address.conversation.name || 'awesome';
+            bot.send(new builder.Message()
+                .address(message.address)
+                .text('Welcome ' + membersAdded + ' to our ' + channelName + ' channel.  If you don\'t mind I\'ll ask you a few questions. (full disclosure: I\'m just a bot trying to facalitate introductions!)'));
+        }
     }
 });
 
