@@ -10,7 +10,7 @@ var botbuilder_azure = require("botbuilder-azure");
 var cognitiveservices = require ("botbuilder-cognitiveservices");
 
 var webrequest = require('ajax-request');
-var devmode  = 'debugWithEmulator'; // options are 'prod' 'debugWithEmulator' 'debugWithSlack'
+var devmode  = 'prod'; // options are 'prod' 'debugWithEmulator' 'debugWithSlack'
 
 /*var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({*/
 if (devmode == 'prod')
@@ -40,6 +40,7 @@ else if (devmode == 'debugWithEmulator')
     }
     catch (e) {
         console.warn("No .env file loaded");
+        console.warn(e);
     }
     var connector = new builder.ChatConnector();
 }
@@ -78,14 +79,14 @@ bot.dialog('tldr', [
             method: 'GET',
             json: true,
             data: {
-                SM_API_KEY: '***REMOVED***',
+                SM_API_KEY: process.env['SM_API_KEY'],
                 SM_LENGTH: 3,
                 SM_URL: summaryUrl
             }
         }, function(err, res, body) {
             console.log(body);
             if (body.sm_api_error) {
-                session.send('*Glasses get shattered');
+                session.send('*Glasses shatter*');
                 session.send('I broke. Send help!');
             }
             session.send(body.sm_api_content);
