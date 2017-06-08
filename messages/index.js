@@ -71,19 +71,24 @@ bot.dialog('FAQ_QnA', basicQnAMakerDialog);
 bot.dialog('tldr', [
     function(session, args){
         var summaryUrl = args.text;
-        session.send('Let me see if I remember how to read today');
+        session.send('*Bot puts on glasses*');
+        session.sendTyping();
         webrequest({
             url: 'http://api.smmry.com',
             method: 'GET',
             json: true,
             data: {
                 SM_API_KEY: '***REMOVED***',
+                SM_LENGTH: 3,
                 SM_URL: summaryUrl
             }
         }, function(err, res, body) {
-            //console.log(err);
-            //console.log(res);
             console.log(body);
+            if (body.sm_api_error) {
+                session.send('*Glasses get shattered');
+                session.send('I broke. Send help!');
+            }
+            session.send(body.sm_api_content);
         });
         session.endDialog();
     }]);
@@ -99,7 +104,7 @@ bot.dialog('/', [
         }
         else if (/^tldr /i.test(session.message.text) === true)
         {
-            session.send('Where do you find these articles?');
+            session.send('Let me see if I can find that article');
             session.message.text = session.message.text.replace(/^tldr /i, '');
             session.beginDialog('tldr', session.message);
         } 
