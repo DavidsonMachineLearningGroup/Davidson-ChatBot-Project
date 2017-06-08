@@ -7,8 +7,9 @@ http://docs.botframework.com/builder/node/guides/understanding-natural-language/
 "use strict";
 var builder = require("botbuilder");
 var botbuilder_azure = require("botbuilder-azure");
-var cognitiveservices = require ("botbuilder-cognitiveservices")
+var cognitiveservices = require ("botbuilder-cognitiveservices");
 
+var webrequest = require('ajax-request');
 var devmode  = 'prod'; // options are 'prod' 'debugWithEmulator' 'debugWithSlack'
 
 /*var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({*/
@@ -33,7 +34,14 @@ else if (devmode == 'debugWithSlack')
 }
 else if (devmode == 'debugWithEmulator')
 {
-    require('dotenv').load();
+    // attempt to load .env file. continue only in debugEmulatorMode
+    try {
+        require('dotenv').load();
+    }
+    catch (e) {
+        console.warn("No .env file loaded");
+        console.warn(e);
+    }
     var connector = new builder.ChatConnector();
 }
 else 
@@ -59,24 +67,52 @@ var basicQnAMakerDialog = new cognitiveservices.QnAMakerDialog({
 });
 
 bot.dialog('FAQ_QnA', basicQnAMakerDialog);
-//bot.dialog('/', basicQnAMakerDialog);
+
+/** smmry.com interface dialog */
+bot.dialog('tldr', [
+    function(session, args){
+        var summaryUrl = args.text;
+        session.send('*Bot puts on glasses*');
+        session.sendTyping();
+        webrequest({
+            url: 'http://api.smmry.com',
+            method: 'GET',
+            json: true,
+            data: {
+                SM_API_KEY: process.env['SM_API_KEY'],
+                SM_LENGTH: 3,
+                SM_URL: summaryUrl
+            }
+        }, function(err, res, body) {
+            console.log(body);
+            if (body.sm_api_error) {
+                session.send('*Glasses shatter*');
+                session.send('I broke. Send help!');
+            }
+            session.send(body.sm_api_content);
+        });
+        session.endDialog();
+    }]);
+/** Router Section */
 bot.dialog('/', [
     function (session, args, next) {
-        if (/^faq /i.test (session.message.text) == true)
+        if (/^faq /i.test(session.message.text) == true)
         {
             session.message.text = session.message.text.replace (/^faq /i, '');
             session.send('Looking up FAQ question: %s', session.message.text);
-///            session.beginDialog (basicQnAMakerDialog)
-//            session.beginDialog('/profile');
             console.log(session.message.text);
             session.beginDialog ('FAQ_QnA');
-        } else {
+        }
+        else if (/^tldr /i.test(session.message.text) === true)
+        {
+            session.send('Let me see if I can find that article');
+            session.message.text = session.message.text.replace(/^tldr /i, '');
+            session.beginDialog('tldr', session.message);
+        } 
+        else {
             next();
         }
     },
-//    function (session, results) {
-//        session.send('Hello %s!', session.userData.name);
-//    }
 ]);
 
 
@@ -89,24 +125,31 @@ bot.dialog('/', [
 });
 */
 
-var userStore = [];
+
 // originally from https://github.com/Microsoft/BotBuilder-Samples/tree/master/Node/core-GetConversationMembers
+var userStore = [];
+// Push address where there is new users to greet.
 bot.on('conversationUpdate', function (message) {
     if (message.membersAdded && message.membersAdded.length > 0) 
     {
         var membersAdded = message.membersAdded
             .map(function (m) {
-                var isSelf = m.id === message.address.bot.id;
-                return (isSelf ? message.address.bot.name : m.name) || '' + ' (Id: ' + m.id + ')';
+                // Don't add for bot joining event
+                if(m.id === message.address.bot.id)
+                    return;
+                return (m.name) || '' + ' (Id: ' + m.id + ')';
             })
             .join(', ');
 
-        bot.send(new builder.Message()
-            .address(message.address)
-            .text('Welcome ' + membersAdded + ' to our ' + message.address.conversation.name + ' channel.  If you don\'t mind I\'ll ask you a few questions. (full disclosure: I\'m just a bot trying to facalitate introductions!)'));
-
-        var address = message.address;
-        userStore.push(address);
+        // If blank, then only the bot was added. Don't greet yourself bot that's weird
+        if (membersAdded)
+        {
+            var channelName = message.address.conversation.name || 'awesome';
+            bot.send(new builder.Message()
+                .address(message.address)
+                .text('Welcome ' + membersAdded + ' to our ' + channelName + ' channel.  If you don\'t mind I\'ll ask you a few questions. (full disclosure: I\'m just a bot trying to facalitate introductions!)'));
+            userStore.push(message.address);
+        }
     }
 });
 
