@@ -72,6 +72,8 @@ bot.dialog('FAQ_QnA', basicQnAMakerDialog);
 bot.dialog('tldr', [
     function(session, args){
         var summaryUrl = args.text;
+//        summaryUrl.replace ("[<>]", "");
+        summaryUrl = summaryUrl.substring(1,summaryUrl.length-1)
         session.send('*Bot puts on glasses*');
         session.sendTyping();
         webrequest({
